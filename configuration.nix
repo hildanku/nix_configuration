@@ -1,4 +1,3 @@
-
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
@@ -95,11 +94,12 @@
 	obs-studio
 	php82
 	mariadb_105
-	apacheHttpd    
+	nginx    
 	discord
 	zoom-us	
 	neofetch
-	git
+	git	
+	
 #  thunderbird
     ];
   };
@@ -158,4 +158,32 @@
 
   # nvidia-drm.modeset=1 is required for some wayland compositors, e.g. sway
   #hardware.nvidia.modesetting.enable = true;
+	services.nginx = {
+	  enable = true;
+	  virtualHosts."testing.nginx" = {
+	    enableACME = false;
+	    forceSSL = false;
+	    root = "/var/www/your_domain/html";
+	    locations."~ \.php$".extraConfig = ''
+	      fastcgi_pass  unix:${config.services.phpfpm.pools.mypool.socket};
+	      fastcgi_index index.php;
+	    '';
+	  };
+	};
+	services.mysql = {
+	  enable = true;
+	  package = pkgs.mariadb;
+	};
+	services.phpfpm.pools.mypool = {                                                                                                                                                                                                             
+	  user = "nobody";                                                                                                                                                                                                                           
+	  settings = {                                                                                                                                                                                                                               
+	    pm = "dynamic";            
+	    "listen.owner" = config.services.nginx.user;                                                                                                                                                                                                              
+	    "pm.max_children" = 5;                                                                                                                                                                                                                   
+	    "pm.start_servers" = 2;                                                                                                                                                                                                                  
+	    "pm.min_spare_servers" = 1;                                                                                                                                                                                                              
+	    "pm.max_spare_servers" = 3;                                                                                                                                                                                                              
+	    "pm.max_requests" = 500;                                                                                                                                                                                                                 
+	  };                                                                                                                                                                                                                                         
+	};
 }
